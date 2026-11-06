@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>БПЛА и мультиспектральная съемка</title>
+    <style>
+        /* --- ВСТРОЕННЫЙ CSS --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Отступы: сверху 40px, снизу 120px (чтобы кнопки не перекрывали текст), по бокам 80px */
+            padding: 40px 80px 120px 80px; 
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        h1 {
+            color: #ff7b00;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: #e0e0e0;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        /* Галерея картинок */
+        .image-gallery {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .image-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 45%;
+        }
+
+        .image-gallery.single .image-block {
+            max-width: 80%;
+        }
+
+        .image-gallery img {
+            max-height: 350px;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            background-color: #fff;
+            padding: 5px;
+        }
+
+        .caption {
+            text-align: center;
+            font-size: 0.95rem;
+            color: #aaa;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        /* --- СТИЛИ ДЛЯ ТЕСТА --- */
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 1px solid #333;
+        }
+
+        .question-block {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ff9f43;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .option-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .option-label input[type="radio"] {
+            transform: scale(1.3);
+            cursor: pointer;
+        }
+
+        /* Подсветка правильных и неправильных ответов */
+        .correct-answer {
+            background-color: rgba(40, 167, 69, 0.4) !important;
+            border: 1px solid #28a745;
+        }
+
+        .wrong-answer {
+            background-color: rgba(220, 53, 69, 0.4) !important;
+            border: 1px solid #dc3545;
+        }
+
+        .quiz-btn {
+            background-color: #28a745;
+            font-size: 1.2rem;
+            padding: 12px 30px;
+            margin-top: 10px;
+            width: 100%;
+            border: none;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .quiz-btn:hover:not(:disabled) {
+            background-color: #218838;
+        }
+
+        #quiz-result {
+            margin-top: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+
+        /* Кнопки управления */
+        .controls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 8px 20px;
+            border-radius: 30px;
+            z-index: 10;
+        }
+
+        button {
+            background-color: #ff7b00;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s, opacity 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #e66a00;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        #slideCounter {
+            font-size: 1.1rem;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* Кастомизация полосы прокрутки */
+        .slide::-webkit-scrollbar {
+            width: 10px;
+        }
+        .slide::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+        .slide::-webkit-scrollbar-thumb {
+            background: #ff7b00;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+
+        <!-- Слайд 1: Титульный -->
+        <div class="slide active">
+            <div class="content" style="text-align: center; margin-top: 50px;">
+                <h1 style="font-size: 3rem;">Глаза в небе: Как дроны видят невидимое</h1>
+                <h2>БПЛА и магия мультиспектральной съемки</h2>
+                <div class="image-gallery single" style="margin-top: 40px;">
+                    <div class="image-block">
+                        <img src="img/3.jpg" alt="Дрон на закате">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 2: Спектр -->
+        <div class="slide">
+            <div class="content">
+                <h1>Мы видим только верхушку айсберга</h1>
+                <h2>Что такое свет и спектр?</h2>
+                <ul>
+                    <li>То, что мы называем «светом» — это лишь крошечная часть огромного электромагнитного спектра.</li>
+                    <li>Наш глаз — как приемник, который ловит только одну радиостанцию (видимый свет: от красного до фиолетового).</li>
+                    <li>А рядом «вещают» радиоволны (Wi-Fi), ультрафиолет (от него мы сгораем) и инфракрасное (тепловое) излучение.</li>
+                    <li>Эти «невидимые» лучи несут в себе кучу информации, которую человек просто не замечает.</li>
+                </ul>
+                <div class="image-gallery single">
+                    <div class="image-block">
+                        <img src="img/2.jpg" alt="Электромагнитный спектр">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3: Камеры -->
+        <div class="slide">
+            <div class="content">
+                <h1>Обычная (RGB) vs Мультиспектральная камера</h1>
+                <ul>
+                    <li>Камера смартфона (RGB) смешивает всего 3 цвета: Red (красный), Green (зеленый), Blue (синий). Она показывает мир так, как его видит человек.</li>
+                    <li>Мультиспектральная камера на дроне «видит» 5, 7 или даже 10 разных диапазонов света одновременно.</li>
+                    <li>Это как добавить к обычным очкам рентгеновское зрение и тепловизор одновременно.</li>
+                </ul>
+                <div class="image-gallery single">
+                    <div class="image-block">
+                        <img src="img/4.jpg" alt="Сравнение RGB и мультиспектра">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4: Суперспособность растений -->
+        <div class="slide">
+            <div class="content">
+                <h1>Почему растения светятся в невидимом диапазоне?</h1>
+                <ul>
+                    <li>Растения поглощают видимый свет (особенно красный и синий) для фотосинтеза.</li>
+                    <li>Но инфракрасный свет они поглощать не могут (он их перегреет). Поэтому здоровые растения <b>отражают</b> его.</li>
+                    <li>Чем здоровее и сочнее лист, тем сильнее он «светится» в инфракрасном диапазоне.</li>
+                    <li>Если растение болеет — отражение падает. Это как детектор лжи для природы!</li>
+                </ul>
+                <div class="image-gallery">
+                    <div class="image-block">
+                        <img src="img/6.jpg" alt="Отражение света листом">
+                    </div>
+                    <div class="image-block">
+                        <img src="img/5.jpg" alt="Инфракрасный пейзаж">
+                        <div class="caption">Как бы мы видели зелёные деревья, если бы замечали инфракрасное излучение.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5: NDVI -->
+        <div class="slide">
+            <div class="content">
+                <h1>NDVI — шкала здоровья растений</h1>
+                <ul>
+                    <li>NDVI (Нормализованный относительный индекс растительности) — это математическая формула, которая сравнивает «красный» и «инфракрасный» цвет.</li>
+                    <li>Результат переводится в шкалу от -1 до 1.</li>
+                    <li>На картах это выглядит как «лайфбар» в видеоиграх: ярко-зеленый — суперздоровое растение, желтый — так себе, красный — больное или пустая земля.</li>
+                    <li>Программы на компьютере сами строят такие карты за пару минут после полета дрона.</li>
+                </ul>
+                <div class="image-gallery single">
+                    <div class="image-block">
+                        <img src="img/1.jpg" alt="Здоровье растений NDVI">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6: Сельское хозяйство -->
+        <div class="slide">
+            <div class="content">
+                <h1>Сельское хозяйство: Точное земледелие</h1>
+                <ul>
+                    <li>Раньше фермеры обходили поля пешком, чтобы найти больные растения.</li>
+                    <li>Теперь дрон пролетает над гектарами за 20 минут. Программа показывает: «Вот здесь, на 3-м гектаре, начинается болезнь!».</li>
+                    <li>Фермер точечно обрабатывает только этот участок, а не все поле целиком.</li>
+                    <li><b>Выгода:</b> Экономия денег на химикатах, защита экологии и огромный урожай.</li>
+                </ul>
+                <div class="image-gallery single">
+                    <div class="image-block">
+                        <img src="img/7.jpg" alt="Фермер с дронами">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7: Экология -->
+        <div class="slide">
+            <div class="content">
+                <h1>Экология: Мониторинг и спасение лесов</h1>
+                <ul>
+                    <li><b>Болезни леса:</b> Обычно мы замечаем, что ель погибла, когда она уже стала коричневой. Мультиспектральная камера увидит стресс дерева за недели до этого.</li>
+                    <li><b>Пожары:</b> Тепловизоры и инфракрасные камеры помогают находить скрытые очаги возгорания (тлеющие торфяники), которые не видно глазом.</li>
+                    <li><b>Незаконная вырубка:</b> Сравнивая новые снимки со старыми, можно за секунды найти, где вырубили лес.</li>
+                </ul>
+                <div class="image-gallery single">
+                    <div class="image-block">
+                        <img src="img/8.jpg" alt="Снимок вырубки леса">
+                        <div class="caption">Снимок вырубки леса (сравнение обычного вида и спектрального анализа)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8: Спасательные работы -->
+        <div class="slide">
+            <div class="content">
+                <h1>Помощь там, где нужнее всего</h1>
+                <ul>
+                    <li><b>Поиск людей:</b> В лесу человека сложно найти из-за листвы. Камеры с тепловизором покажут потерявшегося по теплу тела даже ночью.</li>
+                    <li><b>Оценка ущерба:</b> После наводнений или землетрясений дроны быстро строят карты разрушений, чтобы спасатели знали, куда ехать в первую очередь.</li>
+                    <li><b>3D-карты:</b> Мультиспектральные дроны могут за час создать точную 3D-модель карьера или стройки (с точностью до сантиметра).</li>
+                </ul>
+                <div class="image-gallery single">
+                    <div class="image-block">
+                        <img src="img/9.jpg" alt="Снимок с тепловизора">
+                        <div class="caption">Снимок с тепловизора: люди в поле видны благодаря теплу их тел.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9: ТЕСТ -->
+        <div class="slide">
+            <div class="content">
+                <h1>Проверка знаний</h1>
+                <div class="quiz-container">
+                    
+                    <!-- Вопрос 1 -->
+                    <div class="question-block" data-question="1">
+                        <div class="question-text">1. Что здоровое растение делает с инфракрасным светом?</div>
+                        <div class="options">
+                            <label class="option-label"><input type="radio" name="q1" value="A"> А) Поглощает его</label>
+                            <label class="option-label"><input type="radio" name="q1" value="B"> Б) Отражает его</label>
+                            <label class="option-label"><input type="radio" name="q1" value="C"> В) Превращает его в тепло</label>
+                        </div>
+                    </div>
+
+                    <!-- Вопрос 2 (ИЗМЕНЕН) -->
+                    <div class="question-block" data-question="2">
+                        <div class="question-text">2. Чем мультиспектральная камера отличается от обычной камеры смартфона?</div>
+                        <div class="options">
+                            <label class="option-label"><input type="radio" name="q2" value="A"> А) Она видит больше спектров света, включая невидимые глазу</label>
+                            <label class="option-label"><input type="radio" name="q2" value="B"> Б) Она всегда делает фото с огромным разрешением</label>
+                            <label class="option-label"><input type="radio" name="q2" value="C"> В) Она может снимать через стены</label>
+                        </div>
+                    </div>
+
+                    <!-- Вопрос 3 -->
+                    <div class="question-block" data-question="3">
+                        <div class="question-text">3. Для чего нужен индекс NDVI?</div>
+                        <div class="options">
+                            <label class="option-label"><input type="radio" name="q3" value="A"> А) Для оценки здоровья растений</label>
+                            <label class="option-label"><input type="radio" name="q3" value="B"> Б) Для создания 3D-моделей зданий</label>
+                            <label class="option-label"><input type="radio" name="q3" value="C"> В) Для измерения температуры воздуха</label>
+                        </div>
+                    </div>
+
+                    <button id="checkQuizBtn" class="quiz-btn">Проверить результаты</button>
+                    <div id="quiz-result"></div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10: Финал -->
+        <div class="slide">
+            <div class="content" style="text-align: center; margin-top: 150px;">
+                <h1 style="font-size: 4rem;">Спасибо за внимание!</h1>
+                <h2>Будущее уже летает над нами.</h2>
+            </div>
+        </div>
+
+        <!-- Навигация -->
+        <div class="controls">
+            <button id="prevBtn">&#8592; Назад</button>
+            <span id="slideCounter">1 / 10</span>
+            <button id="nextBtn">Вперед &#8594;</button>
+        </div>
+
+    </div>
+
+    <!-- --- ВСТРОЕННЫЙ JAVASCRIPT --- -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ЛОГИКА ПРЕЗЕНТАЦИИ ---
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const slideCounter = document.getElementById('slideCounter');
+            let currentSlide = 0;
+
+            function showSlide(index) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                slides[index].classList.add('active');
+                slideCounter.textContent = `${index + 1} / ${slides.length}`;
+                
+                prevBtn.disabled = index === 0;
+                nextBtn.disabled = index === slides.length - 1;
+                prevBtn.style.opacity = index === 0 ? '0.5' : '1';
+                nextBtn.style.opacity = index === slides.length - 1 ? '0.5' : '1';
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' && currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            showSlide(currentSlide);
+
+            // --- ЛОГИКА ТЕСТА ---
+            const checkBtn = document.getElementById('checkQuizBtn');
+            const resultDiv = document.getElementById('quiz-result');
+            
+            // Правильные ответы (1-Б, 2-А, 3-А)
+            const correctAnswers = {
+                q1: 'B',
+                q2: 'A',
+                q3: 'A'
+            };
+
+            checkBtn.addEventListener('click', () => {
+                let score = 0;
+                let allAnswered = true;
+                const totalQuestions = 3;
+
+                // Проверяем, что все вопросы отвечены
+                for (let i = 1; i <= totalQuestions; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if (!selected) {
+                        allAnswered = false;
+                        break;
+                    }
+                }
+
+                if (!allAnswered) {
+                    alert("Пожалуйста, ответьте на все вопросы перед проверкой!");
+                    return;
+                }
+
+                // Обрабатываем каждый вопрос
+                for (let i = 1; i <= totalQuestions; i++) {
+                    const questionBlock = document.querySelector(`.question-block[data-question="${i}"]`);
+                    const labels = questionBlock.querySelectorAll('.option-label');
+                    const selectedValue = document.querySelector(`input[name="q${i}"]:checked`).value;
+                    const correctValue = correctAnswers[`q${i}`];
+
+                    // Блокируем дальнейшее изменение ответов
+                    const inputs = questionBlock.querySelectorAll('input[type="radio"]');
+                    inputs.forEach(input => input.disabled = true);
+
+                    // Подсветка
+                    labels.forEach(label => {
+                        const input = label.querySelector('input');
+                        if (input.value === correctValue) {
+                            label.classList.add('correct-answer'); // Правильный ответ всегда зеленый
+                        }
+                        if (input.value === selectedValue && selectedValue !== correctValue) {
+                            label.classList.add('wrong-answer'); // Выбранный неправильный - красный
+                        }
+                    });
+
+                    if (selectedValue === correctValue) {
+                        score++;
+                    }
+                }
+
+                // Вывод результата
+                resultDiv.style.display = 'block';
+                let message = `Ваш результат: ${score} из ${totalQuestions}. `;
+                if (score === totalQuestions) {
+                    message += "Отлично! Вы отлично усвоили материал.";
+                    resultDiv.style.color = "#28a745";
+                } else if (score >= 2) {
+                    message += "Хорошо! Но стоит повторить некоторые разделы.";
+                    resultDiv.style.color = "#ffc107";
+                } else {
+                    message += "Стоит пересмотреть презентацию еще раз.";
+                    resultDiv.style.color = "#dc3545";
+                }
+                resultDiv.textContent = message;
+                
+                // Меняем кнопку, чтобы нельзя было нажать дважды
+                checkBtn.textContent = "Результаты проверены";
+                checkBtn.disabled = true;
+                checkBtn.style.backgroundColor = "#6c757d";
+            });
+        });
+    </script>
+</body>
+</html>
